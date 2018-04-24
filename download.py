@@ -6,19 +6,21 @@ import shutil
 from multiprocessing import Pool
 import multiprocessing as multi
 import argparse
+from tqdm import tqdm
 
 
 def download_image(box):
     if not os.path.isfile(box[0]):
-        r = requests.get(box[1], stream=True)
-        if r.status_code == 200:
-            with open(box[0], "wb") as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
-            print('success: {}'.format(box[0]))
-            return box[0], True
-        else:
-            print('fail: {}'.format(box[0]))
+        try:
+            r = requests.get(box[1], stream=True)
+            if r.status_code == 200:
+                with open(box[0], "wb") as f:
+                    r.raw.decode_content = True
+                    shutil.copyfileobj(r.raw, f)
+                return box[0], True
+            else:
+                return box[0], False
+        except Exception as e:
             return box[0], False
     else:
         print('already exists: {}'.format(box[0]))
@@ -39,7 +41,7 @@ def main():
     p = Pool(multi.cpu_count())
 
     box = []
-    for i, row in df.iterrows():
+    for i, row in tqdm(df.iterrows(), desc='read csv'):
         url = row['url']
         out_dir = join(args.out, '{0:03d}'.format(i // 10000))
         if not exists(out_dir):
@@ -47,11 +49,17 @@ def main():
             os.makedirs(out_dir)
         file_name = join(out_dir, '{}.jpg'.format(row['id']))
         box.append([file_name, url])
+        if i == 1000:
+            break
 
     available_images = []
-    for path, status in p.imap_unordered(download_image, box):
+    for i, (path, status) in enumerate(tqdm(p.imap_unordered(download_image, box), desc='download', total=len(box), unit='files')):
         if status:
             available_images.append(path)
+
+        if i % 1000 == 0:
+            print('iter: {}, num_downloaded: {}'.format(
+                i, len(available_images)))
         p.close()
 
     with open(args.txt, 'w') as f:
