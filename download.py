@@ -49,8 +49,6 @@ def main():
             os.makedirs(out_dir)
         file_name = join(out_dir, '{}.jpg'.format(row['id']))
         box.append([file_name, url])
-        if i == 1000:
-            break
 
     available_images = []
     for i, (path, status) in enumerate(tqdm(p.imap_unordered(download_image, box), desc='download', total=len(box), unit='files')):
