@@ -48,7 +48,7 @@ def main():
 
     for msg, status in p.imap_unordered(download_image, box):
         if status == False:
-            print(result)
+            print(msg)
         p.close()
 
 
