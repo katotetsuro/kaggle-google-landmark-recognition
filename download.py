@@ -47,8 +47,6 @@ def main():
             os.makedirs(out_dir)
         file_name = join(out_dir, '{}.jpg'.format(row['id']))
         box.append([file_name, url])
-        if i == 100:
-            break
 
     available_images = []
     for path, status in p.imap_unordered(download_image, box):
