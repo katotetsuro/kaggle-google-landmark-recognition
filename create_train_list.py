@@ -34,7 +34,6 @@ def main():
                 os.path.join(args.image_dir, image_file_name)))
 
         if i % 1000 == 0:
-            break
             print(i)
 
     print('number of available_images:{}'.format(len(available_files)))
