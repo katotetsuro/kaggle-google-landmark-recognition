@@ -15,11 +15,14 @@ def download_image(box):
             with open(box[0], "wb") as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
-            return 'success: {}'.format(box[0]), True
+            print('success: {}'.format(box[0]))
+            return box[0], True
         else:
-            return 'fail: {}'.format(box[0]), False
+            print('fail: {}'.format(box[0]))
+            return box[0], False
     else:
         print('already exists: {}'.format(box[0]))
+        return box[0], True
 
 
 def main():
@@ -28,11 +31,12 @@ def main():
     parser.add_argument('--file', default='train.csv',
                         help='kaggleで配布されているtrain.csv or test.csvの場所')
     parser.add_argument('--out', default='data', help='ダウンロード先ディレクトリ')
+    parser.add_argument('--txt', default='all.txt', help='ダウンロードに成功した画像の一覧')
     args = parser.parse_args()
     print(args)
 
     df = pd.read_csv(args.file)
-    p = Pool(4)
+    p = Pool(multi.cpu_count())
 
     box = []
     for i, row in df.iterrows():
@@ -43,13 +47,17 @@ def main():
             os.makedirs(out_dir)
         file_name = join(out_dir, '{}.jpg'.format(row['id']))
         box.append([file_name, url])
+        if i == 100:
+            break
 
-    print('総ジョブ数', len(box))
-
-    for msg, status in p.imap_unordered(download_image, box):
-        if status == False:
-            print(msg)
+    available_images = []
+    for path, status in p.imap_unordered(download_image, box):
+        if status:
+            available_images.append(path)
         p.close()
+
+    with open(args.txt, 'w') as f:
+        f.write('\n'.join(available_images))
 
 
 if __name__ == '__main__':
