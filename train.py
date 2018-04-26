@@ -113,7 +113,7 @@ def main():
 
     # augment train data
     train = chainer.datasets.LabeledImageDataset(
-        join(args.dara_dir, 'train.txt'), root=args.data_dir, dtype=np.uint8)
+        join(args.data_dir, 'train.txt'), root=args.data_dir, dtype=np.uint8)
     train = chainer.datasets.transform_dataset.TransformDataset(
         train, augmentor_transformer.AugmentorTransform())
 
