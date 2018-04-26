@@ -72,6 +72,7 @@ def main():
                         help='alpha')
     parser.add_argument('--decay', default=5e-4, type=float)
     parser.add_argument('--class_weight', default=None, type=str)
+    parser.add_argument('--data_dir', default='data')
     args = parser.parse_args()
 
     print('GPU: {}'.format(args.gpu))
@@ -112,14 +113,14 @@ def main():
 
     # augment train data
     train = chainer.datasets.LabeledImageDataset(
-        'train.txt', root='data/train', dtype=np.uint8)
+        join(args.dara_dir, 'train.txt'), root=args.data_dir, dtype=np.uint8)
     train = chainer.datasets.transform_dataset.TransformDataset(
         train, augmentor_transformer.AugmentorTransform())
 
     train_iter = chainer.iterators.MultiprocessIterator(train, args.batchsize)
 
     test = chainer.datasets.LabeledImageDataset(
-        'test.txt', root='data/train', dtype=np.uint8)
+        join(args.data_dir, 'test.txt'), root=args.data_dir, dtype=np.uint8)
     test = chainer.datasets.transform_dataset.TransformDataset(
         test, augmentor_transformer.AugmentorTransform(train=False))
     test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
