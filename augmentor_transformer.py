@@ -34,7 +34,7 @@ class AugmentorTransform():
             raise ValueError('cannot handle dtype {}'.format(x.dtype))
 
         if x.shape[0] == 1:
-            x = np.stack([x, x, x])
+            x = np.concatenate([x, x, x])
         img = Image.fromarray(x.transpose((1, 2, 0)))
         for operation in self.p.operations:
             img = operation.perform_operation([img])[0]
