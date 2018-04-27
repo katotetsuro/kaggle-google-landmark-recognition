@@ -1,0 +1,17 @@
+{
+    "seed": "0",
+    "batchsize": "128",
+    "learnrate": "0.1",
+    "epoch": "300",
+    "gpu": "-1",
+    "out": "result",
+    "resume": "",
+    "model": "resnet50",
+    "weight": "",
+    "start_channel": "16",
+    "depth": "16",
+    "alpha": "90",
+    "decay": "0.0005",
+    "class_weight": "None",
+    "data_dir": "."
+}
