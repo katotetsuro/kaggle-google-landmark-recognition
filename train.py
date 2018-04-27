@@ -20,6 +20,7 @@ from chainerui.extensions import CommandsExtension
 
 import shaked_pyramid_net
 import augmentor_transformer
+import skippable_dataset
 
 
 class ResNet(chainer.links.ResNet50Layers):
@@ -112,14 +113,15 @@ def main():
     optimizer.add_hook(chainer.optimizer.WeightDecay(args.decay))
 
     # augment train data
-    train = chainer.datasets.LabeledImageDataset(
+    train = skippable_dataset.SkippableDataset(
         join(args.data_dir, 'train.txt'), root=args.data_dir, dtype=np.uint8)
     train = chainer.datasets.transform_dataset.TransformDataset(
         train, augmentor_transformer.AugmentorTransform())
 
-    train_iter = chainer.iterators.MultiprocessIterator(train, args.batchsize)
+    train_iter = chainer.iterators.MultiprocessIterator(
+        train, args.batchsize, shared_mem=100000000)
 
-    test = chainer.datasets.LabeledImageDataset(
+    test = skippable_dataset.SkippableDataset(
         join(args.data_dir, 'test.txt'), root=args.data_dir, dtype=np.uint8)
     test = chainer.datasets.transform_dataset.TransformDataset(
         test, augmentor_transformer.AugmentorTransform(train=False))

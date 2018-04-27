@@ -48,7 +48,7 @@ def main():
     if args.retry is not None:
         with open(args.retry, 'r') as f:
             targets = list(map(lambda x: Path(x.strip()).stem, f.readlines()))
-        df = df[df['id' == targets]]
+        df = df[df.id.isin(targets)]
         print('number of retry targets:{}'.format(len(df)))
     for i, row in tqdm(df.iterrows(), desc='read csv', total=len(df), unit='lines'):
         out_dir = join(args.out, '{0:03d}'.format(i // 10000))

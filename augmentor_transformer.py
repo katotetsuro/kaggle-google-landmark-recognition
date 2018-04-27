@@ -35,6 +35,9 @@ class AugmentorTransform():
 
         if x.shape[0] == 1:
             x = np.concatenate([x, x, x])
+        elif x.shape[0] > 3:
+            x = x[:3]
+
         img = Image.fromarray(x.transpose((1, 2, 0)))
         for operation in self.p.operations:
             img = operation.perform_operation([img])[0]
