@@ -9,4 +9,4 @@ class SkippableDataset(chainer.datasets.LabeledImageDataset):
         except Exception as e:
             print(e)
             print('failed to load data index={}'.format(index))
-            return np.zeros((3, 224, 224), dtype=np.uint8), -1
+            return np.zeros((3, 224, 224), dtype=np.uint8), np.array(-1, dtype=np.int32)
