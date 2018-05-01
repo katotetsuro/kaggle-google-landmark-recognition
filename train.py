@@ -158,6 +158,10 @@ def main():
         extensions.snapshot_object(model,
                                    'best_accuracy.npz'),
         trigger=chainer.training.triggers.MaxValueTrigger('validation/main/accuracy'))
+    trainer.extend(
+        extensions.snapshot_object(model,
+                                   'model_{.updater.iteration}.npz'),
+        trigger=(5000, 'iteration'))
 
     # Write a log of evaluation statistics for each epoch
     trainer.extend(extensions.LogReport())
