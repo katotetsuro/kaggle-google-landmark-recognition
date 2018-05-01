@@ -19,7 +19,7 @@ class SkipTransform(chainer.datasets.transform_dataset.TransformDataset):
             print(e)
             print('failed to load data index={}'.format(index))
             SkipTransform.failed_indices.append(index)
-            if with_label:
+            if self.with_label:
                 return np.zeros((3, 224, 224), dtype=np.float32), np.array(-1, dtype=np.int32)
             else:
                 return np.zeros((3, 224, 224), dtype=np.float32)
