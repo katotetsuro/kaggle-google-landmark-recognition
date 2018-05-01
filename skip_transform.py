@@ -18,7 +18,7 @@ class SkipTransform(chainer.datasets.transform_dataset.TransformDataset):
         except Exception as e:
             print(e)
             print('failed to load data index={}'.format(index))
-            failed_indices.append(index)
+            SkipTransform.failed_indices.append(index)
             if with_label:
                 return np.zeros((3, 224, 224), dtype=np.float32), np.array(-1, dtype=np.int32)
             else:
