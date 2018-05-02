@@ -98,6 +98,7 @@ def main():
         args.class_weight)
 
     model = L.Classifier(predictor)
+    print('number of parameters:{}'.format(model.count_params()))
 
     if not args.weight == '':
         chainer.serializers.load_npz(args.weight, model)
