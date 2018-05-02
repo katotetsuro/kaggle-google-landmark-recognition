@@ -8,25 +8,24 @@ import multiprocessing as multi
 import argparse
 from tqdm import tqdm
 from pathlib import Path
-from PIL import Image
 
 
 def download_image(box):
-    if not os.path.isfile(box[0]):
+    file_path = join(box['base_dir'], box['file_path'])
+    if not os.path.isfile(file_path):
         try:
-            r = requests.get(box[1], stream=True)
+            r = requests.get(box['url'], stream=True)
             if r.status_code == 200:
-                with open(box[0], "wb") as f:
+                with open(file_path, "wb") as f:
                     r.raw.decode_content = True
                     shutil.copyfileobj(r.raw, f)
-                Image.open(f)
-                return box[0], True
+                return box, True
             else:
-                return box[0], False
+                return box, False
         except Exception as e:
-            return box[0], False
+            return box, False
     else:
-        return box[0], True
+        return box, True
 
 
 def main():
@@ -38,6 +37,7 @@ def main():
     parser.add_argument('--txt', default='all.txt', help='ダウンロードに成功した画像の一覧')
     parser.add_argument('--retry', default=None, type=str,
                         help='これを指定した場合は、このリスト内から再ダウンロードする. check_image.pyと併せて使う')
+    parser.add_argument('--limit', default=-1, type=int, help='最大ダウンロード数')
     args = parser.parse_args()
     print(args)
 
@@ -51,23 +51,30 @@ def main():
         df = df[df.id.isin(targets)]
         print('number of retry targets:{}'.format(len(df)))
     for i, row in tqdm(df.iterrows(), desc='read csv', total=len(df), unit='lines'):
-        out_dir = join(args.out, '{0:03d}'.format(i // 10000))
+        d = '{0:03d}'.format(i // 10000)
+        out_dir = join(args.out, d)
         if not exists(out_dir):
             print('create new directory:{}'.format(out_dir))
             os.makedirs(out_dir)
-        file_name = join(out_dir, '{}.jpg'.format(row['id']))
-        box.append([file_name, row['url']])
+        row['base_dir'] = args.out
+        row['file_path'] = join(d, '{}.jpg'.format(row['id']))
+        box.append(row)
+        if args.limit > 0 and i > args.limit:
+            break
 
     available_images = []
-    for i, (path, status) in enumerate(tqdm(p.imap_unordered(download_image, box), desc='download', total=len(box), unit='files')):
+    for i, (box, status) in enumerate(tqdm(p.imap_unordered(download_image, box), desc='download', total=len(box), unit='files')):
         if status:
-            available_images.append(path)
+            available_images.append('{} {}'.format(
+                box['file_path'], box['landmark_id']))
 
         if i % 10000 == 0:
             print('iter: {}, num_downloaded: {}'.format(
                 i, len(available_images)))
         p.close()
 
+    print('iter: {}, num_downloaded: {}'.format(
+        i, len(available_images)))
     with open(args.txt, 'w') as f:
         f.write('\n'.join(available_images))
 
