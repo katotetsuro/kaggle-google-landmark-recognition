@@ -16,7 +16,10 @@ def download_image(box):
     file_path = join(box['base_dir'], box['file_path'])
     if not os.path.isfile(file_path):
         try:
-            r = requests.get(box['url'], stream=True)
+            url = box['url']
+            url = url.replace('s1600', 's224')
+            url = url.replace('medium', 'small')
+            r = requests.get(url, stream=True)
             if r.status_code == 200:
                 img = Image.open(BytesIO(r.content))
                 w, h = img.size
@@ -28,6 +31,7 @@ def download_image(box):
                 img.save(file_path)
                 return box, True
             else:
+                print(box['id'], r.status_code, url)
                 return box, False
         except Exception as e:
             return box, False
@@ -36,6 +40,7 @@ def download_image(box):
 
 
 def main():
+    tqdm.monitor_interval = 0
     parser = argparse.ArgumentParser(
         description='画像をダウンロードする')
     parser.add_argument('--file', default='train.csv',
@@ -62,13 +67,15 @@ def main():
         df = df[df.id.isin(targets)]
         print('number of retry targets:{}'.format(len(df)))
     for i, row in tqdm(df.iterrows(), desc='read csv', total=len(df), unit='lines'):
-        d = '{0:03d}'.format(i // 10000)
-        out_dir = join(args.out, d)
+        #        d = '{0:03d}'.format(i // 10000)
+        #        out_dir = join(args.out, d)
+        out_dir = args.out
         if not exists(out_dir):
             print('create new directory:{}'.format(out_dir))
             os.makedirs(out_dir)
         row['base_dir'] = args.out
-        row['file_path'] = join(d, '{}.jpg'.format(row['id']))
+#        row['file_path'] = join(d, '{}.jpg'.format(row['id']))
+        row['file_path'] = '{}.jpg'.format(row['id'])
         box.append(row)
         if args.limit > 0 and i > args.limit:
             break
