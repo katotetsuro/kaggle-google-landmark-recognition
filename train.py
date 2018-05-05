@@ -71,6 +71,8 @@ def main():
     parser.add_argument('--decay', default=5e-4, type=float)
     parser.add_argument('--class_weight', default=None, type=str)
     parser.add_argument('--data_dir', default='data')
+    parser.add_argument('--print_interval', default=1000,
+                        type=int, help='print interval(iteration)')
     args = parser.parse_args()
 
     print('GPU: {}'.format(args.gpu))
@@ -116,8 +118,10 @@ def main():
     # augment train data
     train = chainer.datasets.LabeledImageDataset(
         join(args.data_dir, 'train.txt'), root=args.data_dir, dtype=np.uint8)
+    default_value = np.zeros(
+        (3, 224, 224), dtype=np.float32), np.array(-1, dtype=np.int32)
     train = skip_transform.SkipTransform(
-        train, augmentor_transformer.AugmentorTransform())
+        train, augmentor_transformer.AugmentorTransform(), default_value)
 
     train_iter = chainer.iterators.MultiprocessIterator(
         train, args.batchsize, shared_mem=100000000)
@@ -125,7 +129,7 @@ def main():
     test = chainer.datasets.LabeledImageDataset(
         join(args.data_dir, 'test.txt'), root=args.data_dir, dtype=np.uint8)
     test = skip_transform.SkipTransform(
-        test, augmentor_transformer.AugmentorTransform(train=False))
+        test, augmentor_transformer.AugmentorTransform(train=False), default_value)
     test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
                                                  repeat=False, shuffle=False)
     # Set up a trainer
@@ -151,7 +155,7 @@ def main():
 
     # Dump a computational graph from 'loss' variable at the first iteration
     # The "main" refers to the target link of the "main" optimizer.
-    trainer.extend(extensions.dump_graph('main/loss'))
+#    trainer.extend(extensions.dump_graph('main/loss'))
 
     # Take a snapshot at each epoch
     trainer.extend(extensions.snapshot(), trigger=(args.epoch, 'epoch'))
@@ -165,7 +169,8 @@ def main():
         trigger=(5000, 'iteration'))
 
     # Write a log of evaluation statistics for each epoch
-    trainer.extend(extensions.LogReport())
+    trainer.extend(extensions.LogReport(), trigger=(
+        args.print_interval, 'iteration'))
 
     # Print selected entries of the log to stdout
     # Here "main" refers to the target link of the "main" optimizer again, and
@@ -174,7 +179,7 @@ def main():
     # either the updater or the evaluator.
     trainer.extend(extensions.PrintReport(
         ['epoch', 'lr', 'main/loss', 'validation/main/loss',
-         'main/accuracy', 'validation/main/accuracy', 'elapsed_time']))
+         'main/accuracy', 'validation/main/accuracy', 'elapsed_time']), , trigger=(args.print_interval, 'iteration'))
 
     # Print a progress bar to stdout
     trainer.extend(extensions.ProgressBar())
