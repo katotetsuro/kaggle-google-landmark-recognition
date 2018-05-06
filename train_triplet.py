@@ -75,7 +75,7 @@ def main():
     set_random_seed(args.seed)
 
 #    model = siamese_network.create_model(activate=None)
-    model = siamese_network.SiameseNet(activate=None)
+    model = siamese_network.SiameseNet(activate=F.sigmoid)
     print('number of parameters:{}'.format(model.count_params()))
 
     if not args.weight == '':
@@ -111,9 +111,9 @@ def main():
                                                  repeat=False, shuffle=False)
     # Set up a trainer
     updater = training.StandardUpdater(train_iter, optimizer, device=args.gpu)
-    #trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
-    trainer = training.Trainer(
-        updater, (5, 'iteration'), out=args.out)
+    trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
+    # trainer = training.Trainer(
+    #    updater, (5, 'iteration'), out=args.out)
 
     # Evaluate the model with the test dataset for each epoch
     eval_trigger = (1, 'epoch')
@@ -148,8 +148,8 @@ def main():
         trigger=(5000, 'iteration'))
 
     # Write a log of evaluation statistics for each epoch
-    trainer.extend(extensions.LogReport(), trigger=(
-        args.print_interval, 'iteration'))
+    trainer.extend(extensions.LogReport((
+        args.print_interval, 'iteration')))
 
     # Print selected entries of the log to stdout
     # Here "main" refers to the target link of the "main" optimizer again, and
