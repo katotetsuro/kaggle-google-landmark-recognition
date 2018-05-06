@@ -148,7 +148,7 @@ def main():
         trigger=(5000, 'iteration'))
 
     # Write a log of evaluation statistics for each epoch
-    trainer.extend(extensions.LogReport((
+    trainer.extend(extensions.LogReport(trigger=(
         args.print_interval, 'iteration')))
 
     # Print selected entries of the log to stdout
