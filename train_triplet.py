@@ -62,6 +62,14 @@ def main():
     parser.add_argument('--data_dir', default='data/train')
     parser.add_argument('--print_interval', default=1000,
                         type=int, help='print interval(iteration)')
+    parser.add_argument('--margin', default=0.2,
+                        type=float, help='triplet margin')
+    parser.add_argument('--activate_function', choices=['None', 'sigmoid'],
+                        default='None', help='activate function of last layer')
+    parser.add_argument('--init_scale', default=0.01, type=float,
+                        help='FC層の初期乱数重みを決めるLeCunNormalにかけるスケール')
+    parser.add_argument('--grad_clip', default=1., type=float,
+                        help='勾配の上限、activate functionがNoneでこれも設定しないと、一瞬で学習が爆発する')
     args = parser.parse_args()
 
     print('GPU: {}'.format(args.gpu))
@@ -75,7 +83,13 @@ def main():
     set_random_seed(args.seed)
 
 #    model = siamese_network.create_model(activate=None)
-    model = siamese_network.SiameseNet(activate=F.sigmoid)
+    if args.activate_function == 'None':
+        activation_function = None
+    elif args.activate_function == 'sigmoid':
+        activation_function = F.sigmoid
+
+    model = siamese_network.SiameseNet(
+        activate=activation_function, init_scale=args.init_scale)
     print('number of parameters:{}'.format(model.count_params()))
 
     if not args.weight == '':
@@ -91,7 +105,8 @@ def main():
     optimizer = chainer.optimizers.MomentumSGD(args.learnrate)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(args.decay))
-
+    optimizer.add_hook(
+        chainer.optimizer_hooks.GradientClipping(args.grad_clip))
     # augment train data
 
     default_value = np.zeros((3, 224, 224), dtype=np.float32), np.zeros(

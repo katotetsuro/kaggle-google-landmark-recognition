@@ -33,6 +33,7 @@ class TripletDataset(chainer.dataset.DatasetMixin):
         img = img.resize((224, 224), Image.BILINEAR)
         img = np.array(img, dtype=np.float32)
         img = img.transpose((2, 0, 1))
+        img = img / 255
         return img
 
     def get_example(self, index):

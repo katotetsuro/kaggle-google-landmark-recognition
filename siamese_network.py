@@ -16,11 +16,12 @@ def create_model(weight='auto', activate=F.sigmoid):
 
 
 class SiameseNet(chainer.Chain):
-    def __init__(self, weight='auto', activate=F.sigmoid):
+    def __init__(self, activate, init_scale, weight='auto'):
         super().__init__()
         with self.init_scope():
             self.resnet = ResNet50Layers(weight)
-            self.fc = L.Linear(None, 128)
+            self.fc = L.Linear(
+                None, 128, initialW=chainer.initializers.LeCunNormal(scale=init_scale))
 
         self.activate = activate
 
@@ -43,7 +44,7 @@ class SiameseNetTrainChain(chainer.Chain):
     def __call__(self, anchor, positive, negative):
         anchor, positive, negative = map(
             self.model, (anchor, positive, negative))
-        loss = F.triplet(anchor, positive, negative, self.margin) / 3
+        loss = F.triplet(anchor, positive, negative, self.margin)
         chainer.reporter.report({
             'loss': loss
         }, self)
