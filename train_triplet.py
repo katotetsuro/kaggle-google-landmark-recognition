@@ -1,6 +1,8 @@
 import argparse
 from os.path import join
+import os
 import random
+import time
 
 import numpy as np
 
@@ -40,6 +42,17 @@ def set_random_seed(seed):
         # chainer.cuda.cupy.random.seed(seed)
 
 
+def wait_process(pid):
+    print('wait {}'.format(pid))
+    while True:
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return
+        else:
+            time.sleep(60)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Chainer CIFAR example:')
     parser.add_argument('--seed', '-s', type=int, default=0,
@@ -64,12 +77,13 @@ def main():
                         type=int, help='print interval(iteration)')
     parser.add_argument('--margin', default=0.2,
                         type=float, help='triplet margin')
-    parser.add_argument('--activate_function', choices=['None', 'sigmoid'],
+    parser.add_argument('--activate_function', choices=['None', 'sigmoid', 'normalize'],
                         default='None', help='activate function of last layer')
     parser.add_argument('--init_scale', default=0.01, type=float,
                         help='FC層の初期乱数重みを決めるLeCunNormalにかけるスケール')
-    parser.add_argument('--grad_clip', default=1., type=float,
+    parser.add_argument('--grad_clip', type=float,
                         help='勾配の上限、activate functionがNoneでこれも設定しないと、一瞬で学習が爆発する')
+    parser.add_argument('--after', type=int, help='プロセスの終了を待つ')
     args = parser.parse_args()
 
     print('GPU: {}'.format(args.gpu))
@@ -77,6 +91,9 @@ def main():
     print('# epoch: {}'.format(args.epoch))
     print(args)
     print('')
+
+    if args.after:
+        wait_process(args.after)
 
     # https://twitter.com/mitmul/status/960155585768439808
 
@@ -87,13 +104,14 @@ def main():
         activation_function = None
     elif args.activate_function == 'sigmoid':
         activation_function = F.sigmoid
+    elif args.activate_function == 'normalize':
+        activation_function = F.normalize
 
     model = siamese_network.SiameseNet(
         activate=activation_function, init_scale=args.init_scale)
-    print('number of parameters:{}'.format(model.count_params()))
-
     if not args.weight == '':
-        chainer.serializers.load_npz(args.weight, model)
+        chainer.serializers.load_npz(args.weight, model, path='model/')
+    print('number of parameters:{}'.format(model.count_params()))
 
     model = siamese_network.SiameseNetTrainChain(model)
 
@@ -105,8 +123,10 @@ def main():
     optimizer = chainer.optimizers.MomentumSGD(args.learnrate)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(args.decay))
-    optimizer.add_hook(
-        chainer.optimizer_hooks.GradientClipping(args.grad_clip))
+    if args.grad_clip:
+        print('use gradient clip:{}'.format(args.grad_clip))
+        optimizer.add_hook(
+            chainer.optimizer_hooks.GradientClipping(args.grad_clip))
     # augment train data
 
     default_value = np.zeros((3, 224, 224), dtype=np.float32), np.zeros(

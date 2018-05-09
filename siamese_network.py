@@ -51,9 +51,6 @@ class SiameseNetTrainChain(chainer.Chain):
 
         p = ((anchor.array - positive.array)**2).sum(axis=1)
         n = ((anchor.array - negative.array)**2).sum(axis=1)
-        accuracy = self.xp.sum(p < n)
-#        print(accuracy, anchor.shape[0])
-        accuracy = accuracy / anchor.shape[0]
+        accuracy = self.xp.mean(p < n)
         chainer.reporter.report({'accuracy': accuracy}, self)
-#        print(loss, accuracy)
         return loss
