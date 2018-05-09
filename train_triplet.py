@@ -113,7 +113,7 @@ def main():
         chainer.serializers.load_npz(args.weight, model, path='model/')
     print('number of parameters:{}'.format(model.count_params()))
 
-    model = siamese_network.SiameseNetTrainChain(model)
+    model = siamese_network.SiameseNetTrainChain(model, margin=args.margin)
 
     if args.gpu >= 0:
         # Make a specified GPU current
