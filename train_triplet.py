@@ -84,6 +84,8 @@ def main():
     parser.add_argument('--grad_clip', type=float,
                         help='勾配の上限、activate functionがNoneでこれも設定しないと、一瞬で学習が爆発する')
     parser.add_argument('--after', type=int, help='プロセスの終了を待つ')
+    parser.add_argument('--dropout_ratio', type=float,
+                        default=0.5, help='FC層のDropout.使いたくないときは0.0にする')
     args = parser.parse_args()
 
     print('GPU: {}'.format(args.gpu))
@@ -108,7 +110,7 @@ def main():
         activation_function = F.normalize
 
     model = siamese_network.SiameseNet(
-        activate=activation_function, init_scale=args.init_scale)
+        activate=activation_function, init_scale=args.init_scale, dropout_ratio=args.dropout_ratio)
     if not args.weight == '':
         chainer.serializers.load_npz(args.weight, model, path='model/')
     print('number of parameters:{}'.format(model.count_params()))

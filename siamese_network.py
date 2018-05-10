@@ -16,7 +16,7 @@ def create_model(weight='auto', activate=F.sigmoid):
 
 
 class SiameseNet(chainer.Chain):
-    def __init__(self, activate, init_scale, weight='auto'):
+    def __init__(self, activate, init_scale, dropout_ratio=0.5, weight='auto'):
         super().__init__()
         with self.init_scope():
             self.resnet = ResNet50Layers(weight)
@@ -24,10 +24,12 @@ class SiameseNet(chainer.Chain):
                 None, 128, initialW=chainer.initializers.LeCunNormal(scale=init_scale))
 
         self.activate = activate
+        self.dropout_ratio = dropout_ratio
 
     def __call__(self, x):
         h = self.resnet(x, layers=['res5'])['res5']
         h = self.fc(h)
+        h = F.dropout(h, ratio=self.dropout_ratio)
         if self.activate:
             h = self.activate(h)
 
